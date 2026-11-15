@@ -134,23 +134,8 @@ function plate(path, depth, bevel, faceted = false) {
   return { vertices, indices };
 }
 function makeModels() {
-  const locket = {
-    round: ellipse(.43,.43,64),
-    heart: polar(64, angle => [.026 * Math.sin(angle) ** 3 * 16, .025 * (13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle)) + .08, 0]),
-    oval: ellipse(.34,.48,64),
-  };
+  const round = ellipse(.43,.43,64);
   const star = polar(8, (a, i) => [.152 * Math.sin(a) * (i % 2 ? .39 : 1), .180 * Math.cos(a) * (i % 2 ? .39 : 1), 0]);
-  const moon = [
-    ...Array.from({ length: 19 }, (_, i) => {
-      const a = (62 + 236 * i / 18) * Math.PI / 180;
-      return [.15 * Math.cos(a), .15 * Math.sin(a), 0];
-    }),
-    ...Array.from({ length: 17 }, (_, i) => {
-      const a = (298 - 236 * (i + 1) / 18) * Math.PI / 180;
-      return [.15 * Math.cos(a) + .103 * Math.sin(Math.PI * (i + 1) / 18), .15 * Math.sin(a), 0];
-    }),
-  ];
-  const stone = (width, height) => [[0,height,0],[width,height * .44,0],[width,-height * .44,0],[0,-height,0],[-width,-height * .44,0],[-width,height * .44,0]];
   const claw = [[-.245,.01,0],[-.18,.102,0],[-.047,.11,0],[.079,.051,0],[.161,.008,0],[.142,-.035,0],[.005,-.083,0],[-.129,-.080,0],[-.208,-.046,0]];
   const models = {
     link: tube(ellipse(.077,.057),.0175),
@@ -159,16 +144,9 @@ function makeModels() {
     lever: plate([[-.05,-.035,0],[.031,-.055,0],[.059,-.027,0],[.021,.038,0],[-.035,.026,0]],.028,.18),
     bail: tube(ellipse(.046,.086),.024),
     star: plate(star,.032,.22,true),
-    moon: plate(moon,.033,.14),
-    ruby: plate(stone(.107,.153),.05,.25,true),
-    emerald: plate(stone(.10,.15),.05,.25,true),
-    rubyMount: plate(stone(.122,.165),.031,.20),
-    emeraldMount: plate(stone(.114,.162),.031,.20),
+    roundRim: tube(round,.045,16),
+    roundGlass: plate(round.map(point => scale(point,.95)),.059,.12),
   };
-  for (const [key, points] of Object.entries(locket)) {
-    models[key + 'Rim'] = tube(points,.045,16);
-    models[key + 'Glass'] = plate(points.map(point => scale(point,.95)),.059,.12);
-  }
   return models;
 }
 

@@ -9,8 +9,6 @@ export function mountStudio(root) {
   const $ = (selector, container = root) => container.querySelector(selector);
   const $$ = (selector, container = root) => [...container.querySelectorAll(selector)];
   const icons = {
-    bookmark: '<path d="M6 4h12v16l-6-4-6 4z"/>',
-    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.7 2.2c-1 .6-1.2 1.1-1.2 2.3m0 3h.01"/>',
     rotate: '<ellipse cx="12" cy="12" rx="9" ry="5" transform="rotate(-23 12 12)"/><path d="M17.6 4.8 20 7.7l-3.6.6M6.6 19.1 4 16.3l3.6-.7"/>',
     hand: '<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5-6a1.5 1.5 0 0 1 3 0v6-4a1.5 1.5 0 0 1 3 0v4-2a1.5 1.5 0 0 1 3 0v5c0 4.2-2.4 7-6.3 7h-.6c-2.3 0-3.8-.8-5.1-2.6l-3.4-4.5a1.5 1.5 0 0 1 2.2-2l1.2 1.1Z"/>',
     spin: '<path d="M3 12c0-2.7 4-5 9-5s9 2.3 9 5-4 5-9 5h-1m3-3-3 3 3 3M12 4v3"/>',
@@ -19,13 +17,11 @@ export function mountStudio(root) {
     minus: '<path d="M5 12h14"/>',
     check: '<path d="m5 12 4 4L19 6"/>',
     arrow: '<path d="M4 12h15m-6-6 6 6-6 6"/>',
-    close: '<path d="m6 6 12 12M18 6 6 18"/>',
   };
   function icon(name, size = 17) {
     return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[name] + '</svg>';
   }
   for (const el of $$('[data-icon]')) el.innerHTML = icon(el.dataset.icon);
-  $('#help').innerHTML = icon('help', 19);
 
   const finishes = {
     yellow: { label: 'Yellow gold', swatch: 'linear-gradient(135deg,#f9e7b4,#c28e3f 53%,#e6bb6a)', color: [1, .73, .34] },
@@ -36,50 +32,20 @@ export function mountStudio(root) {
   const lockets = {
     none: { label: 'Chain only', detail: 'No locket' },
     round: { label: 'Round', detail: 'Glass locket' },
-    heart: { label: 'Heart', detail: 'Glass locket' },
-    oval: { label: 'Oval', detail: 'Glass locket' },
   };
   const charms = {
     star: { label: 'North star', detail: 'Gold', color: [1,.74,.36] },
-    moon: { label: 'Crescent moon', detail: 'Gold', color: [1,.77,.40] },
-    ruby: { label: 'Rose quartz', detail: 'Pink stone', color: [.92,.39,.51] },
-    emerald: { label: 'Green tourmaline', detail: 'Green stone', color: [.27,.68,.49] },
   };
   const steps = ['chain', 'locket', 'charms'];
-  const initial = { finish: 'yellow', length: 18, locket: 'none', charms: [] };
-  let state = { ...initial };
+  const state = { finish: 'yellow', length: 18, locket: 'none', charms: [] };
   let currentStep = 'chain';
   let viewer = null;
-  const storageKey = 'aurel-necklace-studio-v1';
-  let saved = readSaved();
   const pane = $('#options');
 
-  function readSaved() {
-    try {
-      const entries = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      return Array.isArray(entries) ? entries.filter(entry => entry && typeof entry.id === 'string' && entry.state
-        && Object.hasOwn(finishes, entry.state.finish) && Object.hasOwn(lengths, entry.state.length)
-        && Object.hasOwn(lockets, entry.state.locket) && Array.isArray(entry.state.charms)
-        && entry.state.charms.length <= 3 && entry.state.charms.every(key => Object.hasOwn(charms, key))) : [];
-    } catch {
-      return [];
-    }
-  }
-  function persist(next) {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      saved = next;
-      $('#saved-count').textContent = saved.length;
-      return true;
-    } catch {
-      $('#save-note').textContent = 'Browser storage is unavailable.';
-      return false;
-    }
-  }
   function describe(design) {
     const parts = [finishes[design.finish].label, design.length + ' in'];
     if (design.locket !== 'none') parts.push(lockets[design.locket].label + ' locket');
-    if (design.charms.length) parts.push(design.charms.length + (design.charms.length === 1 ? ' charm' : ' charms'));
+    if (design.charms.length) parts.push(charms.star.label + ' charm');
     return parts.join(' · ');
   }
 
@@ -87,11 +53,6 @@ export function mountStudio(root) {
     const definitions = '<defs><linearGradient id="metal-' + kind + '" x1="0" y1="0" x2=".88" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#896026"/><stop offset=".24" stop-color="#e9ce85"/><stop offset=".43" stop-color="#fff2bd"/><stop offset=".67" stop-color="#bb8842"/><stop offset=".87" stop-color="#f2d18b"/><stop offset="1" stop-color="#987039"/></linearGradient><linearGradient id="glass-' + kind + '" x2="1" y2="1"><stop stop-color="#fdf9ee"/><stop offset="1" stop-color="#dcd5c4"/></linearGradient></defs>';
     const gold = 'url(#metal-' + kind + ')';
     const glass = 'url(#glass-' + kind + ')';
-    const outlines = {
-      round: '<circle cx="26" cy="29" r="13.4"/>',
-      heart: '<path d="M26 42C22 38 12 31 12 24c0-8 9-11 14-4 5-7 14-4 14 4 0 7-10 14-14 18Z"/>',
-      oval: '<ellipse cx="26" cy="29" rx="11.8" ry="15"/>',
-    };
     let art;
     if (kind === 'chain') {
       art = Array.from({ length: 13 }, (_, i) => {
@@ -100,15 +61,10 @@ export function mountStudio(root) {
         const angle = Math.atan2(24 * Math.PI / 12 * Math.cos(Math.PI * i / 12), 2.8) * 180 / Math.PI;
         return '<ellipse cx="' + x + '" cy="' + y + '" rx="3.9" ry="' + (i % 2 ? '1.35' : '2.8') + '" transform="rotate(' + angle + ' ' + x + ' ' + y + ')" stroke="' + gold + '" stroke-width="1.8" fill="none"/>';
       }).join('');
-    } else if (Object.hasOwn(outlines, kind)) {
-      art = '<ellipse cx="26" cy="12" rx="2.8" ry="4.3" fill="none" stroke="' + gold + '" stroke-width="2.3"/><g fill="' + glass + '" stroke="' + gold + '" stroke-width="3.2">' + outlines[kind] + '</g><path d="m20 27 5-5m-3 9 7-7" stroke="#fffdf5" stroke-linecap="round" opacity=".75"/>';
+    } else if (kind === 'round') {
+      art = '<ellipse cx="26" cy="12" rx="2.8" ry="4.3" fill="none" stroke="' + gold + '" stroke-width="2.3"/><g fill="' + glass + '" stroke="' + gold + '" stroke-width="3.2"><circle cx="26" cy="29" r="13.4"/></g><path d="m20 27 5-5m-3 9 7-7" stroke="#fffdf5" stroke-linecap="round" opacity=".75"/>';
     } else if (kind === 'star') {
       art = '<path d="M26 9c2.5 11 5 14 15 17-10 3-12.5 6-15 17-2.5-11-5-14-15-17 10-3 12.5-6 15-17Z" fill="' + gold + '" stroke="#97733b" stroke-width=".65"/>';
-    } else if (kind === 'moon') {
-      art = '<path d="M32 10a17 17 0 1 0 7 26C25 39 19 19 32 10Z" fill="' + gold + '" stroke="#97733b" stroke-width=".65"/>';
-    } else if (kind === 'ruby' || kind === 'emerald') {
-      const colors = kind === 'ruby' ? ['#c3697b','#e9a5ae','#a4475b'] : ['#48886b','#8dbba0','#2e604a'];
-      art = '<path d="m26 10 12 11v13L26 43 14 34V21Z" fill="' + gold + '"/><path d="m26 12 10 10v11L26 41 16 33V22Z" fill="' + colors[0] + '"/><path d="m26 12 5 11-5 5-10-6Z" fill="' + colors[1] + '"/><path d="m26 28 10-6v11L26 41Z" fill="' + colors[2] + '"/><path d="m16 33 10-5v13Z" fill="' + colors[1] + '" opacity=".62"/>';
     } else {
       art = '<circle cx="26" cy="26" r="12" fill="none" stroke="#8b8575" stroke-width="1.2"/><path d="m18 34 16-16" stroke="#8b8575" stroke-width="1.2"/>';
     }
@@ -125,14 +81,13 @@ export function mountStudio(root) {
     } else {
       const isLocket = currentStep === 'locket';
       const choices = isLocket ? lockets : charms;
-      pane.innerHTML = '<h2>' + (isLocket ? 'Choose a locket' : 'Pick your charms') + '</h2><p class="description">'
-        + (isLocket ? 'Try a glass locket or keep the chain on its own.' : 'Add up to three charms. Select one again to remove it.') + '</p><div class="choice-grid">'
+      pane.innerHTML = '<h2>' + (isLocket ? 'Choose a locket' : 'Choose a charm') + '</h2><p class="description">'
+        + (isLocket ? 'Try a glass locket or keep the chain on its own.' : 'Select the North star to add or remove it.') + '</p><div class="choice-grid">'
         + Object.entries(choices).map(([key, item]) => {
           const selected = isLocket ? state.locket === key : state.charms.includes(key);
-          const atLimit = !isLocket && !selected && state.charms.length >= 3;
-          return '<button type="button" class="choice" data-' + (isLocket ? 'locket' : 'charm') + '="' + key + '" aria-pressed="' + selected + '"' + (atLimit ? ' disabled' : '') + '>' + thumb(key) + '<span><strong>' + item.label + '</strong><small>' + item.detail + '</small></span></button>';
+          return '<button type="button" class="choice" data-' + (isLocket ? 'locket' : 'charm') + '="' + key + '" aria-pressed="' + selected + '">' + thumb(key) + '<span><strong>' + item.label + '</strong><small>' + item.detail + '</small></span></button>';
         }).join('') + '</div>'
-        + (isLocket ? '' : '<p class="selection-note" aria-live="polite">' + state.charms.length + ' of 3 selected · ' + (state.locket === 'none' ? 'Hang directly from the chain' : 'Sit inside the locket') + '</p>');
+        + (isLocket ? '' : '<p class="selection-note" aria-live="polite">' + (state.locket === 'none' ? 'Hangs directly from the chain' : 'Sits inside the locket') + '</p>');
     }
     if (focusOption) $(focusOption, pane)?.focus({ preventScroll: true });
   }
@@ -151,9 +106,8 @@ export function mountStudio(root) {
     pane.setAttribute('aria-labelledby', 'tab-' + step);
     renderOptions();
     const next = $('#next');
-    next.hidden = step === 'charms';
-    next.style.display = next.hidden ? 'none' : '';
-    next.innerHTML = (step === 'chain' ? 'Choose locket' : 'Choose charms') + icon('arrow', 15);
+    next.parentElement.hidden = step === 'charms';
+    next.innerHTML = (step === 'chain' ? 'Choose locket' : 'Choose charm') + icon('arrow', 15);
   }
   listen($('.steps'), 'click', event => {
     const button = event.target.closest('[data-tab]');
@@ -171,66 +125,15 @@ export function mountStudio(root) {
     if (!button || button.disabled) return;
     const [key, value] = Object.entries(button.dataset)[0];
     if (key === 'charm') {
-      state.charms = state.charms.includes(value) ? state.charms.filter(item => item !== value) : [...state.charms, value];
+      state.charms = state.charms.includes(value) ? [] : [value];
     } else {
       state[key] = key === 'length' ? +value : value;
     }
-    $('#save-note').textContent = 'Designs are saved in this browser.';
     renderOptions('[data-' + key + '="' + value + '"]');
     updateSummary();
     viewer?.update();
   });
   listen($('#next'), 'click', () => setStep(steps[steps.indexOf(currentStep) + 1], true));
-  listen($('#help'), 'click', () => $('#help-dialog').showModal());
-  listen($('#save'), 'click', () => {
-    const signature = JSON.stringify(state);
-    if (saved.some(entry => JSON.stringify(entry.state) === signature)) {
-      $('#save-note').textContent = 'This design is already saved.';
-      return;
-    }
-    const next = [{ id: Date.now().toString(36), state: { ...state, charms: [...state.charms] } }, ...saved];
-    if (persist(next)) $('#save-note').textContent = 'Design saved.';
-  });
-  function renderSaved() {
-    const content = $('#saved-content');
-    content.replaceChildren();
-    if (!saved.length) {
-      const message = document.createElement('p');
-      message.className = 'empty';
-      message.textContent = 'Your saved necklaces will appear here.';
-      content.append(message);
-      return;
-    }
-    const list = document.createElement('ul');
-    list.className = 'saved-list';
-    for (const item of saved) {
-      const row = document.createElement('li');
-      row.className = 'saved-item';
-      row.innerHTML = '<div><strong>Signature Cable</strong><small></small></div><button class="secondary" type="button">Load</button><button class="icon-button" type="button" aria-label="Remove saved design">' + icon('close', 15) + '</button>';
-      $('small', row).textContent = describe(item.state);
-      $('.secondary', row).addEventListener('click', () => {
-        state = { ...item.state, charms: [...item.state.charms] };
-        setStep('chain');
-        updateSummary();
-        viewer?.reset();
-        $('#saved-dialog').close();
-        $('#save-note').textContent = 'Saved design loaded.';
-      });
-      $('.icon-button', row).addEventListener('click', () => {
-        if (persist(saved.filter(entry => entry.id !== item.id))) {
-          renderSaved();
-          ($('.secondary', content) || $('#saved-dialog .icon-button')).focus();
-        }
-      });
-      list.append(row);
-    }
-    content.append(list);
-  }
-  listen($('#open-saved'), 'click', () => {
-    renderSaved();
-    $('#saved-dialog').showModal();
-  });
-  $('#saved-count').textContent = saved.length;
   setStep('chain');
   updateSummary();
 
@@ -292,11 +195,6 @@ export function mountStudio(root) {
         if (uStyle == 1) {
           float glaze = 0.55 * mainBox + 0.34 * rimBox + 0.26 * stripe + 0.28 * rim;
           outputColor = vec4(vec3(0.96, 0.93, 0.84) + 0.045 * glaze, 0.13 + glaze * 0.70);
-          return;
-        }
-        if (uStyle == 2) {
-          vec3 stoneColor = uColor * (0.42 + diffuse * 1.7 + 0.34 * lowBox + 0.33 * rim);
-          outputColor = vec4(mix(stoneColor, vec3(1.0, 0.97, 0.91), 0.72 * mainBox + 0.32 * rimBox), 1.0);
           return;
         }
         vec3 metal = uColor * (0.37 + diffuse + 0.43 * mainBox + 0.58 * lowBox + 0.38 * rimBox + 0.16 * rim);
@@ -504,22 +402,11 @@ export function mountStudio(root) {
         object(state.locket + 'Rim',attach(0,-.72,.056),pendantBasis);
         object(state.locket + 'Rim',attach(0,-.72,-.056),pendantBasis);
       }
-      const charmCount = state.charms.length;
-      const charmBasis = hasLocket ? pendantBasis.map(axis => scale(axis,.78)) : pendantBasis;
-      for (const [i, name] of state.charms.entries()) {
-        const relative = i - (charmCount - 1) / 2;
-        let center;
-        if (hasLocket) {
-          const height = charmCount === 3 ? (i === 1 ? -.105 : .105) : .035;
-          center = attach(relative * (charmCount === 3 ? .151 : .255), -.72 + height, .011);
-        } else {
-          const anchor = point(.5 + relative * .018);
-          object('bail',add(anchor,[0,-.073,.016]),pendantBasis);
-          center = add(anchor,scale(frameY,-.291 - (i % 2) * .055));
-        }
-        const isStone = name === 'ruby' || name === 'emerald';
-        if (isStone) object(name + 'Mount',center,charmBasis);
-        object(name,add(center,[0,0,isStone ? .014 : 0]),charmBasis,charms[name].color,isStone ? 2 : 0);
+      if (state.charms.length) {
+        const charmBasis = hasLocket ? pendantBasis.map(axis => scale(axis,.78)) : pendantBasis;
+        if (!hasLocket) object('bail',add(bottom,[0,-.073,.016]),pendantBasis);
+        const center = hasLocket ? attach(0,-.685,.011) : add(bottom,scale(frameY,-.291));
+        object('star',center,charmBasis,charms.star.color);
       }
       if (hasLocket) {
         gl.enable(gl.BLEND);
@@ -754,7 +641,7 @@ export function mountStudio(root) {
       $('#preview-label').textContent = 'Preview unavailable';
       $('#fallback p').textContent = message;
       $('#fallback').hidden = false;
-      $('#stage-tip').textContent = 'You can still customize and save your design.';
+      $('#stage-tip').textContent = 'You can still customize your design.';
       canvas.tabIndex = -1;
       for (const control of controls) control.disabled = true;
     }
@@ -783,7 +670,6 @@ export function mountStudio(root) {
     resize();
     return {
       update,
-      reset,
       dispose() {
         observer.disconnect();
         cancelAnimationFrame(frame);
@@ -803,7 +689,7 @@ export function mountStudio(root) {
     console.warn(error);
     $('#preview-label').textContent = 'Preview unavailable';
     $('#fallback').hidden = false;
-    $('#stage-tip').textContent = 'You can still customize and save your design.';
+    $('#stage-tip').textContent = 'You can still customize your design.';
     $('#scene').tabIndex = -1;
     for (const control of $$('.stage-controls button')) control.disabled = true;
   }
